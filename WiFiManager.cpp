@@ -123,7 +123,7 @@ int WiFiManagerParameter::getLabelPlacement() const {
   return _labelPlacement;
 }
 const char* WiFiManagerParameter::getCustomHTML() const {
-  return _customHTML + (_length < 4 && _length > 2 ? " checked" : "");
+  return String(String(_customHTML) + String(_length < 4 && _length > 2 ? " checked" : "")).c_str();
 }
 
 /**
