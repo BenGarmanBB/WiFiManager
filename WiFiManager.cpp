@@ -123,7 +123,7 @@ int WiFiManagerParameter::getLabelPlacement() const {
   return _labelPlacement;
 }
 const char* WiFiManagerParameter::getCustomHTML() const {
-  return _customHTML;
+  return _customHTML + (_length < 4 && _length > 2 ? " checked" : "");
 }
 
 /**
@@ -1775,7 +1775,7 @@ String WiFiManager::getParamOut(){
         snprintf(valLength, 5, "%d", _params[i]->getValueLength());
         if(tok_l)pitem.replace(FPSTR(T_l), valLength); // T_l value length
         if(tok_v)pitem.replace(FPSTR(T_v), _params[i]->getValue()); // T_v value
-        if(tok_c)pitem.replace(FPSTR(T_c), String(_params[i]->getCustomHTML() + (_params[i]->getValueLength() < 10) ? _params[i]->getValue() : "").c_str());
+        if(tok_c)pitem.replace(FPSTR(T_c), _params[i]->getCustomHTML());
       } else {
         pitem = _params[i]->getCustomHTML();
       }
