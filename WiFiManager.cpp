@@ -1775,7 +1775,7 @@ String WiFiManager::getParamOut(){
         snprintf(valLength, 5, "%d", _params[i]->getValueLength());
         if(tok_l)pitem.replace(FPSTR(T_l), valLength); // T_l value length
         if(tok_v)pitem.replace(FPSTR(T_v), _params[i]->getValue()); // T_v value
-        if(tok_c)pitem.replace(FPSTR(T_c), String(String(_params[i]->getCustomHTML()) + String(_params[i]->getValue() == "checked" ? " checked" : "")).c_str()); // T_c meant for additional attributes, not html, but can stuff
+        if(tok_c)pitem.replace(FPSTR(T_c), String(String(_params[i]->getCustomHTML()) + String(_params[i]->getValue() == "checked" ? " checked" : "hi")).c_str()); // T_c meant for additional attributes, not html, but can stuff
       } else {
         pitem = _params[i]->getCustomHTML();
       }
