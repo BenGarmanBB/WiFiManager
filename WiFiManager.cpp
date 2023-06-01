@@ -34,7 +34,7 @@ WiFiManagerParameter::WiFiManagerParameter(const char *custom) {
   _length         = 0;
   _value          = nullptr;
   _labelPlacement = WFM_LABEL_DEFAULT;
-  _customHTML     = nullptr;
+  _customHTML     = custom;
 }
 
 WiFiManagerParameter::WiFiManagerParameter(const char *id, const char *label) {
@@ -57,11 +57,10 @@ void WiFiManagerParameter::init(const char *id, const char *label, const char *d
   _id             = id;
   _label          = label;
   _labelPlacement = labelPlacement;
-  _customHTML     = nullptr;
+  _customHTML     = custom;
   _length         = 0;
   _value          = nullptr;
   setValue(defaultValue,length);
-  setHTML(custom);
 }
 
 WiFiManagerParameter::~WiFiManagerParameter() {
@@ -103,10 +102,7 @@ void WiFiManagerParameter::setValue(const char *defaultValue, int length) {
     strncpy(_value, defaultValue, _length);
   }
 }
-void WiFiManagerParameter::setHTML(const char *defaultValue) {
-  
-  strncpy(_customHTML, defaultValue, strlen(defaultValue));
-}
+
 const char* WiFiManagerParameter::getValue() const {
   // Serial.println(printf("Address of _value is %p\n", (void *)_value)); 
   return _value;
@@ -1779,7 +1775,7 @@ String WiFiManager::getParamOut(){
         snprintf(valLength, 5, "%d", _params[i]->getValueLength());
         if(tok_l)pitem.replace(FPSTR(T_l), valLength); // T_l value length
         if(tok_v)pitem.replace(FPSTR(T_v), _params[i]->getValue()); // T_v value
-        if(tok_c)pitem.replace(FPSTR(T_c), _params[i]->getCustomHTML()); // T_c meant for additional attributes, not html, but can stuff
+        if(tok_c)pitem.replace(FPSTR(T_c), String(String(_params[i]->getCustomHTML()) + String(_params[i]->getValue() == "checked" ? " checked" : "")).c_str()); // T_c meant for additional attributes, not html, but can stuff
       } else {
         pitem = _params[i]->getCustomHTML();
       }
