@@ -1334,7 +1334,7 @@ void WiFiManager::handleRoot() {
   String page = getHTTPHead(_title); // @token options @todo replace options with title
   String str  = FPSTR(HTTP_ROOT_MAIN); // @todo custom title
   str.replace(FPSTR(T_t),_title);
-  str.replace(FPSTR(T_v),configPortalActive ? _apName : (getWiFiHostname() + " - " + WiFi.localIP().toString())); // use ip if ap is not active for heading @todo use hostname?
+	str.replace(FPSTR(T_v), _subTitle); 
   page += str;
   page += FPSTR(HTTP_PORTAL_OPTIONS);
   page += getMenuOut();
@@ -3110,6 +3110,14 @@ void WiFiManager::setTitle(String title){
 }
 
 /**
+ * [setTitle description]
+ * @param String title, set app title
+ */
+void WiFiManager::setSubTitle(String subTitle){
+  _subTitle = subTitle;
+}
+
+/**
  * set menu items and order
  * if param is present in menu , params will be removed from wifi page automatically
  * eg.
@@ -3836,7 +3844,7 @@ void WiFiManager::handleUpdate() {
 	String page = getHTTPHead(_title); // @token options
 	String str = FPSTR(HTTP_ROOT_MAIN);
   str.replace(FPSTR(T_t), _title);
-	str.replace(FPSTR(T_v), configPortalActive ? _apName : (getWiFiHostname() + " - " + WiFi.localIP().toString())); // use ip if ap is not active for heading
+	str.replace(FPSTR(T_v), _subTitle); // use ip if ap is not active for heading
 	page += str;
 
 	page += FPSTR(HTTP_UPDATE);
@@ -3946,8 +3954,8 @@ void WiFiManager::handleUpdateDone() {
 	String page = getHTTPHead(FPSTR(S_options)); // @token options
 	String str  = FPSTR(HTTP_ROOT_MAIN);
   str.replace(FPSTR(T_t),_title);
-	str.replace(FPSTR(T_v), configPortalActive ? _apName : WiFi.localIP().toString()); // use ip if ap is not active for heading
-	page += str;
+	str.replace(FPSTR(T_v), _subTitle); 
+  page += str;
 
 	if (Update.hasError()) {
 		page += FPSTR(HTTP_UPDATE_FAIL);
