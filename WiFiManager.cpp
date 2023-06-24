@@ -250,7 +250,7 @@ void WiFiManager::_begin(){
   if(_hasBegun) return;
   _hasBegun = true;
   // _usermode = WiFi.getMode();
-
+  _startconn = millis();
   #ifndef ESP32
   WiFi.persistent(false); // disable persistent so scannetworks and mode switching do not cause overwrites
   #endif
@@ -1110,10 +1110,18 @@ bool WiFiManager::wifiConnectNew(String ssid, String pass,bool connect){
   #endif
   WiFi_enableSTA(true,storeSTAmode); // storeSTAmode will also toggle STA on in default opmode (persistent) if true (default)
   WiFi.persistent(true);
-  ret = WiFi.begin(ssid.c_str(), pass.c_str(), 0, NULL, connect);
+    if(_fastConnectMode) {
+    #ifdef WM_DEBUG_LEVEL
+    DEBUG_WM(DEBUG_INFO,F("Using FASTCONNECT NEW"));
+    #endif
+    getFastConConfig(ssid);
+    ret = WiFi.begin(ssid.c_str(), pass.c_str(), _fastConnectChannel, _fastConnectBSSID, true);
+  } else {
+    ret = WiFi.begin(ssid.c_str(), pass.c_str(), 0, NULL, connect);
+  }
   WiFi.persistent(false);
   #ifdef WM_DEBUG_LEVEL
-  if(!ret) DEBUG_WM(DEBUG_ERROR,F("[ERROR] wifi begin failed"));
+  if(!ret) DEBUG_WM(DEBUG_ERROR,F("[ERROR] WiFi Begin Failed"));
   #endif
   return ret;
 }
@@ -1125,14 +1133,13 @@ bool WiFiManager::wifiConnectNew(String ssid, String pass,bool connect){
  */
 bool WiFiManager::wifiConnectDefault(){
   bool ret = false;
-
   #ifdef WM_DEBUG_LEVEL
   DEBUG_WM(F("Connecting to SAVED AP:"),WiFi_SSID(true));
   DEBUG_WM(DEBUG_DEV,F("Using Password:"),WiFi_psk(true));
   #endif
 
   ret = WiFi_enableSTA(true,storeSTAmode);
-  delay(500); // THIS DELAY ?
+  // delay(500); // enable sta race condition bugs exist
 
   #ifdef WM_DEBUG_LEVEL
   DEBUG_WM(DEBUG_DEV,F("Mode after delay: "),getModeString(WiFi.getMode()));
@@ -1141,6 +1148,36 @@ bool WiFiManager::wifiConnectDefault(){
 
   ret = WiFi.begin();
 
+  // if(!ret && _fastConnectMode) {
+  //   // @todo since fastconnect is usually only for saved, this may cause delays/issues, add check if retries >1 maybe
+  //   #ifdef WM_DEBUG_LEVEL    
+  //   DEBUG_WM(DEBUG_INFO,F("Using FASTCONNECT UPDATE"));
+  //   #endif
+  //   // have another go if using fast connect in case channel has changed
+  //   getFastConConfig(WiFi_SSID(true));
+  //   ret = WiFi.begin(WiFi_SSID(true).c_str(), WiFi_psk(true).c_str(), _fastConnectChannel, _fastConnectBSSID, true);
+  // }
+// Crashing ATM
+// *wm:[1] Using FASTCONNECT UPDATE 
+// *wm:[2] WiFi Scan SYNC started 
+// *wm:[0] [ERROR] scan failed 
+// *wm:[2] WiFi Scan completed in 2 ms
+// *wm:[2] Fast Config RSSI:  -200
+// *wm:[2] Fast Config CHAN:  0
+// Guru Meditation Error: Core  1 panic'ed (LoadProhibited). Exception was unhandled.
+// Core 1 register dump:
+// PC      : 0x400dbd56  PS      : 0x00060230  A0      : 0x800dc040  A1      : 0x3ffb1d10  
+// A2      : 0x3ffc1720  A3      : 0x00000000  A4      : 0x00000000  A5      : 0x00000001  
+// A6      : 0xffffff38  A7      : 0x00000000  A8      : 0x800dbd50  A9      : 0x3ffb1d00  
+// A10     : 0x3ffb1d48  A11     : 0x3f40099e  A12     : 0x00000012  A13     : 0x3ffb1d5a  
+// A14     : 0x3ffc698c  A15     : 0x00000001  SAR     : 0x00000010  EXCCAUSE: 0x0000001c  
+// EXCVADDR: 0x00000005  LBEG    : 0x4000c46c  LEND    : 0x4000c477  LCOUNT  : 0x00000000  
+
+// ELF file SHA256: 0000000000000000
+
+// Backtrace: 0x400dbd56:0x3ffb1d10 0x400dc03d:0x3ffb1d80 0x400dc26d:0x3ffb1dc0 0x400e0ec2:0x3ffb1e30 0x400d1a4b:0x3ffb1e80 0x400e3946:0x3ffb1fb0 0x40089a8a:0x3ffb1fd0
+
+
   #ifdef WM_DEBUG_LEVEL
   if(!ret) DEBUG_WM(DEBUG_ERROR,F("[ERROR] wifi begin failed"));
   #endif
@@ -1148,19 +1185,16 @@ bool WiFiManager::wifiConnectDefault(){
   return ret;
 }
 
-
 /**
  * set sta config if set
  * @since $dev
  * @return bool success
  */
 bool WiFiManager::setSTAConfig(){
-  #ifdef WM_DEBUG_LEVEL
-  DEBUG_WM(DEBUG_DEV,F("STA static IP:"),_sta_static_ip);  
-  #endif
   bool ret = true;
   if (_sta_static_ip) {
       #ifdef WM_DEBUG_LEVEL
+      DEBUG_WM(DEBUG_DEV,F("STA static IP:"),_sta_static_ip);  
       DEBUG_WM(DEBUG_VERBOSE,F("Custom static IP/GW/Subnet/DNS"));
       #endif
     if(_sta_static_dns) {
@@ -2307,7 +2341,7 @@ String WiFiManager::getInfoData(String id){
 }
 
 /** 
- * HTTPD CALLBACK exit, closes configportal if blocking, if non blocking undefined
+ * HTTPD CALLBACK exit, closes configportal or webportal if running
  */
 void WiFiManager::handleExit() {
   #ifdef WM_DEBUG_LEVEL
@@ -3070,6 +3104,14 @@ void WiFiManager::setShowInfoErase(boolean enabled){
 }
 
 /**
+ * toggle fast connect mode
+ * @param boolean enabled
+ */
+void WiFiManager::setFastConnectMode(bool enabled){
+  _fastConnectMode = enabled;
+}
+
+/*
  * toggle showing update upload web ota button on info page
  * @param boolean enabled
  */
@@ -3093,7 +3135,10 @@ bool WiFiManager::getWebPortalActive(){
   return webPortalActive;
 }
 
-
+/**
+ * [WiFiManager::getWiFiHostname description]
+ * @return [description]
+ */
 String WiFiManager::getWiFiHostname(){
   #ifdef ESP32
     return (String)WiFi.getHostname();
@@ -3109,7 +3154,7 @@ String WiFiManager::getWiFiHostname(){
 void WiFiManager::setTitle(String title){
   _title = title;
 }
-
+  
 /**
  * [setTitle description]
  * @param String title, set app title
@@ -3584,8 +3629,8 @@ bool WiFiManager::WiFiSetCountry(){
   #endif
   
   #ifdef WM_DEBUG_LEVEL
-  if(ret) DEBUG_WM(DEBUG_VERBOSE,F("[OK] esp_wifi_set_country: "),_wificountry);
-  else DEBUG_WM(DEBUG_ERROR,F("[ERROR] esp_wifi_set_country failed"));  
+  if(ret) DEBUG_WM(DEBUG_VERBOSE,F("esp_wifi_set_country SUCCESS: "),_wificountry);
+  else DEBUG_WM(DEBUG_ERROR,F("[ERROR] esp_wifi_set_country FAILED"));  
   #endif
   return ret;
 }
@@ -3835,6 +3880,54 @@ void WiFiManager::WiFi_autoReconnect(){
     // }
   #endif
 }
+
+/**
+ * getFastConConfig
+ * attempt to set fastconfig, do wifi scan, and store the best channel and bssid to pass to begin()
+ * @param  {[type]} String ssid [description]
+ * @return {[type]}        [description]
+ */
+bool WiFiManager::getFastConConfig(String ssid){
+  bool ret = WiFi_scanNetworks(true);
+  int networksFound = _numNetworks;
+  int32_t scan_rssi = -200;
+  for (size_t i = 0; i < networksFound; i++) {
+    if(ssid == WiFi.SSID(i)) {
+      if(WiFi.RSSI(i) > scan_rssi) {
+        _fastConnectChannel = WiFi.channel(i);
+        _fastConnectBSSID = WiFi.BSSID(i);
+        scan_rssi = WiFi.RSSI(i);
+        ret = true;
+      }
+    }
+  }
+
+  #ifdef WM_DEBUG_LEVEL
+  if(ret){
+    DEBUG_WM(DEBUG_VERBOSE,F("FastConfig RSSI: "),(String)scan_rssi);
+    DEBUG_WM(DEBUG_VERBOSE,F("FastConfig CHAN: "),(String)_fastConnectChannel);
+    char mac[18] = { 0 };
+    sprintf(mac,"%02X:%02X:%02X:%02X:%02X:%02X", _fastConnectBSSID[0], _fastConnectBSSID[1], _fastConnectBSSID[2], _fastConnectBSSID[3], _fastConnectBSSID[4], _fastConnectBSSID[5]);
+    DEBUG_WM(DEBUG_VERBOSE,F("FastConfig BSSID: "),(String)mac);
+  }
+  else{
+    DEBUG_WM(DEBUG_ERROR,F("[ERROR] FastConfig SET FAILED "),(String)scan_rssi);
+  }
+  #endif
+
+  return ret;
+}
+
+
+// bool clearFastConConfig(){
+// // wifi_config_sta.bssid = null;
+// // wifi_config_sta.channel = null
+// }
+
+// infer fast connect from flash ? channel and bssid set?
+// bool getfastConnectSet(){
+//   return WiFi.channel()!= "" && WiFi.BSSID() != "";
+// }
 
 // Called when /update is requested
 void WiFiManager::handleUpdate() {

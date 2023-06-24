@@ -425,6 +425,9 @@ class WiFiManager
     // see _menutokens for ids
     void          setMenu(std::vector<const char*>& menu);
     void          setMenu(const char* menu[], uint8_t size);
+
+    // if true enable Fast connect mode
+    void          setFastConnectMode(bool enabled);
     
     // set the webapp title, default WiFiManager
     void          setTitle(String title);
@@ -541,6 +544,7 @@ class WiFiManager
     
     WiFiMode_t    _usermode               = WIFI_STA; // Default user mode
     String        _wifissidprefix         = FPSTR(S_ssidpre); // auto apname prefix prefix+chipid
+
     int           _cpclosedelay           = 2000; // delay before wifisave, prevents captive portal from closing to fast.
     bool          _cleanConnect           = false; // disconnect before connect in connectwifi, increases stability on connects
     bool          _connectonsave          = true; // connect to wifi when saving creds
@@ -620,6 +624,11 @@ class WiFiManager
     boolean       _disableIpFields        = false; // modify function of setShow_X_Fields(false), forces ip fields off instead of default show if set, eg. _staShowStaticFields=-1
 
     String        _wificountry            = "";  // country code, @todo define in strings lang
+	
+    //fast mode to set mac address and channel during begin
+	boolean       _fastConnectMode        = false;
+	uint8_t*      _fastConnectBSSID;
+	uint32_t      _fastConnectChannel     = 0;
 
     // wrapper functions for handling setting and unsetting persistent for now.
     bool          esp32persistent         = false;
@@ -648,6 +657,7 @@ class WiFiManager
     uint8_t       waitForConnectResult();
     uint8_t       waitForConnectResult(uint32_t timeout);
     void          updateConxResult(uint8_t status);
+	bool          getFastConConfig(String ssid);
 
     // webserver handlers
     void          HTTPSend(const String &content);
@@ -764,12 +774,12 @@ class WiFiManager
 
     // debugging
     typedef enum {
-        DEBUG_SILENT    = 0, // debug OFF but still compiled for runtime
-        DEBUG_ERROR     = 1, // error only
-        DEBUG_NOTIFY    = 2, // default stable,INFO
-        DEBUG_VERBOSE   = 3, // move verbose info
-        DEBUG_DEV       = 4, // development useful debugging info
-        DEBUG_MAX       = 5  // MAX extra dev auditing, var dumps etc (MAX+1 will print timing,mem and frag info)
+        DEBUG_ERROR     = 0,
+        DEBUG_NOTIFY    = 1, // alias
+        DEBUG_INFO      = 1, // default stable
+        DEBUG_VERBOSE   = 2,
+        DEBUG_DEV       = 3, // default dev
+        DEBUG_MAX       = 4
     } wm_debuglevel_t;
 
     boolean _debug  = true;
@@ -793,7 +803,7 @@ class WiFiManager
     #ifdef WM_DEBUG_LEVEL
     uint8_t _debugLevel = (uint8_t)WM_DEBUG_LEVEL;
     #else 
-    uint8_t _debugLevel = 0; // default debug level
+    uint8_t _debugLevel = DEBUG_INFO; // default debug level
     #endif
 
     // @todo use DEBUG_ESP_PORT ?

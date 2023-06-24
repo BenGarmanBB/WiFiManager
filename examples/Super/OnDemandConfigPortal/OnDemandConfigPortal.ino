@@ -20,6 +20,7 @@ unsigned long mtime = 0;
 
 
 WiFiManager wm;
+// WiFiManager wm(Serial); // pass in debug out io stream/print
 
 
 // TEST OPTION FLAGS
@@ -104,13 +105,13 @@ void setup() {
   Serial.println("[ERROR]  TEST");
   Serial.println("[INFORMATION] TEST");  
 
+  wm.debugPlatformInfo(); // debug info about eso platform
+  // wm.setDebugOutput(true, "[WM] "); // enable debugging, optional custom log prefix
 
   // WiFi.setScanMethod(WIFI_ALL_CHANNEL_SCAN); // wifi_scan_method_t scanMethod
   // WiFi.setSortMethod(WIFI_CONNECT_AP_BY_SIGNAL); // wifi_sort_method_t sortMethod - WIFI_CONNECT_AP_BY_SIGNAL,WIFI_CONNECT_AP_BY_SECURITY
   // WiFi.setMinSecurity(WIFI_AUTH_WPA2_PSK);
 
-  wm.setDebugOutput(true);
-  wm.debugPlatformInfo();
 
   //reset settings - for testing
   // wm.resetSettings();
@@ -220,6 +221,7 @@ void setup() {
 
   // set country
   // setting wifi country seems to improve OSX soft ap connectivity, 
+  // setting country also seems to improve sta connection times for some reason
   // may help others as well, default is CN which has different channels
 
   // wm.setCountry("US"); // crashing on esp32 2.0
@@ -281,6 +283,9 @@ void setup() {
 
   // use autoconnect, but prevent configportal from auto starting
   // wm.setEnableConfigPortal(false);
+
+  // force esp to store channel and bssid for faster connections (theoretically 2-3x faster connections)
+  wm.setFastConnectMode(true);
 
   wifiInfo();
 
@@ -361,7 +366,7 @@ void loop() {
   }
 
   // every 10 seconds
-  if(millis()-mtime > 10000 ){
+  if(millis()-mtime > 30000 ){
     if(WiFi.status() == WL_CONNECTED){
       getTime();
     }
