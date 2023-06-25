@@ -1586,8 +1586,8 @@ bool WiFiManager::WiFi_scanNetworks(bool force,bool async){
 
 String WiFiManager::WiFiManager::getScanItemOut(){
     String page;
-    WiFi_scanNetworks(true);
-    // if(!_numNetworks)  // scan in case this gets called before any scans
+
+    if(!_numNetworks) WiFi_scanNetworks(true); // scan in case this gets called before any scans
     for (int y = 0; y < _numNetworks; y++)
     {
       DEBUG_WM(DEBUG_VERBOSE,F("APScan: "),(String)y + " " + (String)WiFi.RSSI(y) + " " + (String)WiFi.SSID(y));
