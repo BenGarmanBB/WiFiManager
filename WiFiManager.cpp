@@ -1104,9 +1104,7 @@ uint8_t WiFiManager::connectWifi(String ssid, String pass, bool connect) {
 bool WiFiManager::wifiConnectNew(String ssid, String pass,bool connect){
   bool ret = false;
   if ( _newAPcallback != NULL) {
-    #ifdef WM_DEBUG_LEVEL
-    DEBUG_WM(DEBUG_VERBOSE,F("[CB] _newAPcallback calling"));
-    #endif
+    DEBUG_WM(F("[CB] _newAPcallback calling"));
     _newAPcallback(); // @CALLBACK
   }
   #ifdef WM_DEBUG_LEVEL
