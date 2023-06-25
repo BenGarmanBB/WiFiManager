@@ -312,6 +312,8 @@ class WiFiManager
     //called when saving either params-in-wifi or params page
     void          setSaveParamsCallback( std::function<void()> func );
 
+    void          setNewAPCallback( std::function<void()> func );
+
     //called just before doing OTA update
     void          setPreOtaUpdateCallback( std::function<void()> func );
 
@@ -827,6 +829,7 @@ class WiFiManager
     // @todo use cb list (vector) maybe event ids, allow no return value
     std::function<void(WiFiManager*)> _apcallback;
     std::function<void()> _webservercallback;
+    std::function<void()> _newAPcallback;
     std::function<void()> _savewificallback;
     std::function<void()> _presavewificallback;
     std::function<void()> _presaveparamscallback;

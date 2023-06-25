@@ -1103,6 +1103,12 @@ uint8_t WiFiManager::connectWifi(String ssid, String pass, bool connect) {
  */
 bool WiFiManager::wifiConnectNew(String ssid, String pass,bool connect){
   bool ret = false;
+  if ( _newAPcallback != NULL) {
+    #ifdef WM_DEBUG_LEVEL
+    DEBUG_WM(DEBUG_VERBOSE,F("[CB] _newAPcallback calling"));
+    #endif
+    _newAPcallback(); // @CALLBACK
+  }
   #ifdef WM_DEBUG_LEVEL
   // DEBUG_WM(DEBUG_DEV,F("CONNECTED: "),WiFi.status() == WL_CONNECTED ? "Y" : "NO");
   DEBUG_WM(F("Connecting to NEW AP:"),ssid);
@@ -2817,6 +2823,10 @@ void WiFiManager::setAPCallback( std::function<void(WiFiManager*)> func ) {
  */
 void WiFiManager::setWebServerCallback( std::function<void()> func ) {
   _webservercallback = func;
+}
+
+void WiFiManager::setNewAPCallback( std::function<void()> func ) {
+  _newAPcallback = func;
 }
 
 /**
