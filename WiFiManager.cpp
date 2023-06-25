@@ -1410,6 +1410,7 @@ void WiFiManager::handleWifi(boolean scan) {
   page += pitem;
 
   pitem = FPSTR(HTTP_FORM_WIFI);
+  pitem.replace(FPSTR(T_v), WiFi_SSID());
 
   page += pitem;
 
@@ -1566,9 +1567,7 @@ bool WiFiManager::WiFi_scanNetworks(bool force,bool async){
           #ifdef WM_DEBUG_LEVEL
           DEBUG_WM(DEBUG_ERROR,F("[ERROR] scan failed"));
           #endif
-        }else{
-          _numNetworks = WiFi.scanComplete();
-        }
+        } else _numNetworks = WiFi.scanComplete();
       }
       else if(res >=0 ) _numNetworks = res;
       _lastscan = millis();
