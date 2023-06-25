@@ -1661,7 +1661,7 @@ String WiFiManager::WiFiManager::getScanItemOut(){
         if (indices[i] == -1) continue; // skip dups
 
         #ifdef WM_DEBUG_LEVEL
-        DEBUG_WM(DEBUG_VERBOSE,F("AP: "),(String)WiFi.RSSI(indices[i]) + " " + (String)WiFi.SSID(indices[i]));
+        DEBUG_WM(DEBUG_VERBOSE,F("AP: "),(String)indices[i] + " " + (String)WiFi.RSSI(indices[i]) + " " + (String)WiFi.SSID(indices[i]));
         #endif
 
         int rssiperc = getRSSIasQuality(WiFi.RSSI(indices[i]));
