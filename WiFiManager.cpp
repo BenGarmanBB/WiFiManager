@@ -78,29 +78,7 @@ WiFiManagerParameter::~WiFiManagerParameter() {
 
 // @note debug is not available in wmparameter class
 void WiFiManagerParameter::setValue(const char *defaultValue, int length) {
-  if(!_id){
-    // Serial.println("cannot set value of this parameter");
-    return;
-  }
-  
-  // if(strlen(defaultValue) > length){
-  //   // Serial.println("defaultValue length mismatch");
-  //   // return false; //@todo bail 
-  // }
-
-  if(_length != length || _value == nullptr){
-    _length = length;
-    if( _value != nullptr){
-      delete[] _value;
-    }
-    _value  = new char[_length + 1];  
-  }
-
-  memset(_value, 0, _length + 1); // explicit null
-  
-  if (defaultValue != NULL) {
-    strncpy(_value, defaultValue, _length);
-  }
+  strncpy(_value, defaultValue, _length);
 }
 
 const char* WiFiManagerParameter::getValue() const {
