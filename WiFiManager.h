@@ -312,6 +312,8 @@ class WiFiManager
     //called when saving either params-in-wifi or params page
     void          setSaveParamsCallback( std::function<void()> func );
 
+    void          setNewAPCallback( std::function<void()> func );
+
     //called just before doing OTA update
     void          setPreOtaUpdateCallback( std::function<void()> func );
 
@@ -431,6 +433,9 @@ class WiFiManager
     
     // set the webapp title, default WiFiManager
     void          setTitle(String title);
+
+    // set the webapp title, default WiFiManager
+    void          setSubTitle(String subTitle);
 
     // add params to its own menu page and remove from wifi, NOT TO BE COMBINED WITH setMenu!
     void          setParamsPage(bool enable);
@@ -593,6 +598,7 @@ class WiFiManager
     const char*   _customMenuHTML         = ""; // store custom head element html from user inside <>
     String        _bodyClass              = ""; // class to add to body
     String        _title                  = FPSTR(S_brand); // app title -  default WiFiManager
+    String        _subTitle               = FPSTR(S_subBrand); // app title -  default WiFiManager
 
     // internal options
     
@@ -656,7 +662,7 @@ class WiFiManager
 	bool          getFastConConfig(String ssid);
 
     // webserver handlers
-    void          HTTPSend(String content);
+    void          HTTPSend(const String &content);
     void          handleRoot();
     void          handleWifi(boolean scan);
     void          handleWifiSave();
@@ -788,7 +794,7 @@ class WiFiManager
     
     // Set default debug level
     #ifndef WM_DEBUG_LEVEL
-    #define WM_DEBUG_LEVEL DEBUG_NOTIFY
+    #define WM_DEBUG_LEVEL DEBUG_MAX
     #endif
 
     // override debug level OFF
@@ -797,9 +803,9 @@ class WiFiManager
     #endif
 
     #ifdef WM_DEBUG_LEVEL
-    uint8_t _debugLevel = (uint8_t)WM_DEBUG_LEVEL;
+    uint8_t _debugLevel = DEBUG_MAX;
     #else 
-    uint8_t _debugLevel = DEBUG_INFO; // default debug level
+    uint8_t _debugLevel = DEBUG_MAX; // default debug level
     #endif
 
     // @todo use DEBUG_ESP_PORT ?
@@ -823,6 +829,7 @@ class WiFiManager
     // @todo use cb list (vector) maybe event ids, allow no return value
     std::function<void(WiFiManager*)> _apcallback;
     std::function<void()> _webservercallback;
+    std::function<void()> _newAPcallback;
     std::function<void()> _savewificallback;
     std::function<void()> _presavewificallback;
     std::function<void()> _presaveparamscallback;
